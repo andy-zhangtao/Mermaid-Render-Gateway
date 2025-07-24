@@ -195,4 +195,3 @@ export default MermaidDiagram;
     return result;
   }
 }
-`;
