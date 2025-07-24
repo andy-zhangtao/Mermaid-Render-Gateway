@@ -1,9 +1,16 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import { RenderController } from './controllers/RenderController';
+import * as path from 'path';
 
 const fastify = Fastify({
   logger: true
+});
+
+// 注册静态文件服务用于临时文件访问
+fastify.register(require('@fastify/static'), {
+  root: path.join(process.cwd(), 'tmp'),
+  prefix: '/tmp/'
 });
 
 const renderController = new RenderController();
@@ -29,7 +36,7 @@ fastify.post('/render', {
         mermaid: { type: 'string' },
         format: { 
           type: 'string', 
-          enum: ['base64', 'url', 'binary'],
+          enum: ['base64', 'png', 'jpeg', 'svg', 'pdf', 'html', 'url'],
           default: 'base64'
         },
         options: {
@@ -42,7 +49,10 @@ fastify.post('/render', {
             },
             width: { type: 'number', minimum: 100, maximum: 2000, default: 800 },
             height: { type: 'number', minimum: 100, maximum: 2000, default: 600 },
-            backgroundColor: { type: 'string', default: '#ffffff' }
+            backgroundColor: { type: 'string', default: '#ffffff' },
+            quality: { type: 'number', minimum: 1, maximum: 100, default: 90 },
+            scale: { type: 'number', minimum: 0.1, maximum: 3.0, default: 1.0 },
+            timeout: { type: 'number', minimum: 1000, maximum: 30000, default: 10000 }
           }
         }
       }
