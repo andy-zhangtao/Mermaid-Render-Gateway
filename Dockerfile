@@ -15,8 +15,8 @@ WORKDIR /app
 # 复制package文件
 COPY package*.json ./
 
-# 安装依赖（仅生产环境）
-RUN npm ci --only=production && npm cache clean --force
+# 安装所有依赖（包含devDependencies用于构建）
+RUN npm ci && npm cache clean --force
 
 # 复制源码
 COPY . .
@@ -71,10 +71,12 @@ RUN addgroup -g 1001 -S nodejs && \
 # 设置工作目录
 WORKDIR /app
 
-# 从builder阶段复制文件
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
+# 复制package文件并安装仅生产依赖
 COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# 从builder阶段复制构建文件
+COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
 # 设置Chrome路径
