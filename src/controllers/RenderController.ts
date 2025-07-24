@@ -77,7 +77,7 @@ export class RenderController {
           return reply.send(result.data);
 
         case 'url':
-          result = await this.renderer.renderToURL(mermaid, renderOptions, 'png');
+          result = await this.renderer.renderToURL(mermaid, renderOptions);
           return reply.send({
             success: true,
             format: 'url',
@@ -85,7 +85,9 @@ export class RenderController {
             metadata: {
               width: result.width,
               height: result.height,
-              renderTime: result.renderTime
+              renderTime: result.renderTime,
+              contentType: 'image/png',
+              fileSize: 'available via download'
             }
           } as RenderResponse);
 

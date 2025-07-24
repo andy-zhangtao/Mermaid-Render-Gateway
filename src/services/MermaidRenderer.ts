@@ -336,43 +336,32 @@ ${mermaidCode}
   }
 
   /**
-   * 生成临时URL访问
+   * 生成临时URL访问 - 专门用于PNG格式
+   * 将图表渲染为PNG并保存到临时目录，返回可访问的HTTP URL
    */
-  async renderToURL(mermaidCode: string, options: MermaidRenderOptions, format: 'png' | 'jpeg' | 'svg' = 'png'): Promise<RenderResult> {
-    let result: RenderResult;
-    
-    switch (format) {
-      case 'png':
-        result = await this.renderToPNG(mermaidCode, options);
-        break;
-      case 'jpeg':
-        result = await this.renderToJPEG(mermaidCode, options);
-        break;
-      case 'svg':
-        result = await this.renderToSVG(mermaidCode, options);
-        break;
-      default:
-        throw new Error(`Unsupported URL format: ${format}`);
-    }
+  async renderToURL(mermaidCode: string, options: MermaidRenderOptions): Promise<RenderResult> {
+    // 渲染为PNG格式
+    const pngResult = await this.renderToPNG(mermaidCode, options);
 
     // 生成唯一文件名
     const timestamp = Date.now();
     const hash = Math.random().toString(36).substring(2);
-    const extension = format === 'svg' ? 'svg' : (format === 'jpeg' ? 'jpg' : 'png');
-    const filename = `mermaid_${timestamp}_${hash}.${extension}`;
+    const filename = `mermaid_${timestamp}_${hash}.png`;
     const filePath = path.join(this.tempDir, filename);
 
-    // 保存文件
-    fs.writeFileSync(filePath, result.data);
+    // 保存PNG文件到临时目录
+    fs.writeFileSync(filePath, pngResult.data);
+    
+    console.log(`✅ PNG文件已保存: ${filePath}`);
 
-    // 返回访问URL
+    // 返回可通过HTTP访问的URL
     const url = `/tmp/${filename}`;
 
     return {
       data: url,
-      width: result.width,
-      height: result.height,
-      renderTime: result.renderTime,
+      width: pngResult.width,
+      height: pngResult.height,
+      renderTime: pngResult.renderTime,
       mimeType: 'text/plain'
     };
   }

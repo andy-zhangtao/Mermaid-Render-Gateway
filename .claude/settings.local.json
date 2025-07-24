@@ -21,7 +21,9 @@
       "Bash(git merge:*)",
       "Bash(gh auth:*)",
       "Bash(gh workflow run:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(true)",
+      "Bash(--output downloaded_image.png)"
     ],
     "deny": []
   }
