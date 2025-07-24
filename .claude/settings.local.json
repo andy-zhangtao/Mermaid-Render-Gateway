@@ -23,7 +23,9 @@
       "Bash(gh workflow run:*)",
       "Bash(gh run view:*)",
       "Bash(true)",
-      "Bash(--output downloaded_image.png)"
+      "Bash(--output downloaded_image.png)",
+      "Bash(kill:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
