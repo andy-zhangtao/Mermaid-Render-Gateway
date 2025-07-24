@@ -171,6 +171,68 @@ scripts/
 - **内存需求**: ~8-10GB（包含浏览器实例）
 - **CPU需求**: 8核心（2.5GHz+）
 
+## 🤖 GitHub Action 构建
+
+### 自动触发构建
+
+GitHub Action 会在以下情况自动执行：
+
+```bash
+# 推送代码触发
+git push origin main
+git push origin feature/*
+
+# 推送标签触发  
+git tag v1.0.1
+git push origin v1.0.1
+
+# 创建PR触发
+gh pr create --title "新功能" --body "描述"
+```
+
+### 手动触发构建
+
+```bash
+# 使用 Makefile（推荐）
+make gh-trigger
+
+# 使用脚本
+./scripts/trigger-build.sh -t production -p
+
+# 使用 GitHub CLI
+gh workflow run docker-build.yml \
+  -f build_type=production \
+  -f push_to_registry=true
+```
+
+### 监控构建状态
+
+```bash
+# 查看构建状态
+make gh-status
+
+# 查看构建日志
+make gh-logs  
+
+# 实时监控构建
+make gh-watch
+
+# 在浏览器中查看
+open "https://github.com/$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^.]*\).*/\1/')/actions"
+```
+
+### 构建产物
+
+构建成功后，Docker 镜像会推送到 GitHub Container Registry：
+
+```bash
+# 拉取最新镜像
+docker pull ghcr.io/your-username/mermaid-render-gateway:latest
+
+# 运行镜像
+docker run -p 3000:3000 ghcr.io/your-username/mermaid-render-gateway:latest
+```
+
 ## 🔧 故障排除
 
 ### Chrome 相关问题

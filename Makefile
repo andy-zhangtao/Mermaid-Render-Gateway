@@ -226,6 +226,26 @@ ci-test: install build test ## CI环境测试流程
 .PHONY: release
 release: clean install build docker-build-multi docker-push tag ## 完整发布流程
 
+.PHONY: gh-trigger
+gh-trigger: ## 触发GitHub Action构建 (需要gh CLI)
+	@echo "$(GREEN)🚀 触发GitHub Action构建...$(RESET)"
+	./scripts/trigger-build.sh
+
+.PHONY: gh-status
+gh-status: ## 查看GitHub Action状态
+	@echo "$(GREEN)📊 GitHub Action状态:$(RESET)"
+	@gh run list --workflow=docker-build.yml --limit=5 || echo "$(RED)请安装GitHub CLI: gh$(RESET)"
+
+.PHONY: gh-logs
+gh-logs: ## 查看最新GitHub Action日志
+	@echo "$(GREEN)📋 查看构建日志...$(RESET)"
+	@gh run view --log || echo "$(RED)请安装GitHub CLI: gh$(RESET)"
+
+.PHONY: gh-watch
+gh-watch: ## 实时监控GitHub Action构建
+	@echo "$(GREEN)👀 实时监控构建...$(RESET)"
+	@gh run watch || echo "$(RED)请安装GitHub CLI: gh$(RESET)"
+
 ##@ 工具和调试
 .PHONY: setup-chrome
 setup-chrome: ## 设置Chrome浏览器

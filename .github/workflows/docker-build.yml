@@ -6,6 +6,23 @@ on:
     tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
+  # 支持手动触发
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: '构建类型'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging  
+        - production
+      push_to_registry:
+        description: '推送到镜像仓库'
+        required: false
+        default: true
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -44,6 +61,17 @@ jobs:
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}
           type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Display build information
+      run: |
+        echo "🏗️ 构建信息:"
+        echo "  仓库: ${{ github.repository }}"
+        echo "  分支: ${{ github.ref_name }}"
+        echo "  提交: ${{ github.sha }}"
+        echo "  构建类型: ${{ github.event.inputs.build_type || 'auto' }}"
+        echo "  推送镜像: ${{ github.event.inputs.push_to_registry || 'true' }}"
+        echo "  镜像标签: ${{ steps.meta.outputs.tags }}"
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
