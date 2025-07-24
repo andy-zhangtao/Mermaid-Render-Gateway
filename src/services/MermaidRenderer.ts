@@ -6,13 +6,50 @@ export class MermaidRenderer {
 
   async initialize(): Promise<void> {
     try {
-      this.browser = await chromium.launch({
+      const launchOptions: any = {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
+      };
+
+      // 如果有指定Chrome路径，使用指定路径
+      if (process.env.CHROME_PATH) {
+        console.log(`🚀 使用指定Chrome: ${process.env.CHROME_PATH}`);
+        launchOptions.executablePath = process.env.CHROME_PATH;
+      } else {
+        console.log('🚀 使用Playwright内置Chromium');
+      }
+
+      this.browser = await chromium.launch(launchOptions);
+      console.log('✅ 浏览器初始化成功');
     } catch (error) {
-      console.error('Failed to launch browser:', error);
-      throw new Error('Browser initialization failed');
+      console.error('❌ 浏览器启动失败:', error);
+      
+      // 如果指定路径失败，尝试使用内置浏览器
+      if (process.env.CHROME_PATH) {
+        console.log('🔄 尝试使用Playwright内置浏览器...');
+        try {
+          this.browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--no-sandbox', 
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-gpu'
+            ]
+          });
+          console.log('✅ 使用内置浏览器成功');
+          return;
+        } catch (fallbackError) {
+          console.error('❌ 内置浏览器也启动失败:', fallbackError);
+        }
+      }
+      
+      throw new Error('Browser initialization failed. Please check Chrome installation or run: npx playwright install chromium');
     }
   }
 
