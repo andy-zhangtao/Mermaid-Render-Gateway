@@ -31,8 +31,21 @@ export class MermaidRenderer {
           '--no-sandbox', 
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-gpu'
-        ]
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--no-first-run',
+          '--no-default-browser-check',
+          '--disable-extensions',
+          '--disable-plugins',
+          '--disable-sync',
+          '--memory-pressure-off',
+          '--max-old-space-size=4096'
+        ],
+        timeout: 60000
       };
 
       // 如果有指定Chrome路径，使用指定路径
@@ -92,10 +105,19 @@ export class MermaidRenderer {
         height: options.height 
       });
 
-      const html = this.generateHTML(mermaidCode, options);
-      await page.setContent(html);
+      const html = this.generateOfflineHTML(mermaidCode, options);
+      
+      // 设置页面内容，增加超时时间
+      await page.setContent(html, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 60000 
+      });
 
-      await page.waitForSelector('#mermaid-diagram', { timeout: 10000 });
+      // 等待 Mermaid 脚本加载
+      await page.waitForFunction('typeof window !== "undefined" && typeof window.mermaid !== "undefined"', { timeout: 30000 });
+      
+      // 等待图表渲染完成
+      await page.waitForSelector('#mermaid-diagram svg', { timeout: 30000 });
       
       const svgElement = await page.$('#mermaid-diagram svg');
       if (!svgElement) {
@@ -203,10 +225,15 @@ ${mermaidCode}
         height: options.height 
       });
 
-      const html = this.generateHTML(mermaidCode, options);
-      await page.setContent(html);
+      const html = this.generateOfflineHTML(mermaidCode, options);
+      
+      await page.setContent(html, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 60000 
+      });
 
-      await page.waitForSelector('#mermaid-diagram', { timeout: 10000 });
+      await page.waitForFunction('typeof window !== "undefined" && typeof window.mermaid !== "undefined"', { timeout: 30000 });
+      await page.waitForSelector('#mermaid-diagram svg', { timeout: 30000 });
       
       const svgElement = await page.$('#mermaid-diagram svg');
       if (!svgElement) {
@@ -251,10 +278,15 @@ ${mermaidCode}
     const page = await this.browser!.newPage();
     
     try {
-      const html = this.generateHTML(mermaidCode, options);
-      await page.setContent(html);
+      const html = this.generateOfflineHTML(mermaidCode, options);
+      
+      await page.setContent(html, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 60000 
+      });
 
-      await page.waitForSelector('#mermaid-diagram', { timeout: 10000 });
+      await page.waitForFunction('typeof window !== "undefined" && typeof window.mermaid !== "undefined"', { timeout: 30000 });
+      await page.waitForSelector('#mermaid-diagram svg', { timeout: 30000 });
       
       // 获取SVG内容
       const svgContent = await page.$eval('#mermaid-diagram svg', el => el.outerHTML);
@@ -310,10 +342,15 @@ ${mermaidCode}
     const page = await this.browser!.newPage();
     
     try {
-      const html = this.generateHTML(mermaidCode, options);
-      await page.setContent(html);
+      const html = this.generateOfflineHTML(mermaidCode, options);
+      
+      await page.setContent(html, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 60000 
+      });
 
-      await page.waitForSelector('#mermaid-diagram', { timeout: 10000 });
+      await page.waitForFunction('typeof window !== "undefined" && typeof window.mermaid !== "undefined"', { timeout: 30000 });
+      await page.waitForSelector('#mermaid-diagram svg', { timeout: 30000 });
       
       const pdfBuffer = await page.pdf({
         format: 'A4',
@@ -413,6 +450,62 @@ ${mermaidCode}
       securityLevel: 'loose',
       fontFamily: 'Arial, sans-serif'
     });
+  </script>
+</body>
+</html>`;
+  }
+
+  /**
+   * 生成离线HTML，避免CDN依赖
+   */
+  private generateOfflineHTML(mermaidCode: string, options: MermaidRenderOptions): string {
+    // 读取本地 mermaid.js 文件
+    const mermaidPath = require.resolve('mermaid/dist/mermaid.min.js');
+    const mermaidScript = require('fs').readFileSync(mermaidPath, 'utf8');
+    
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: ${options.backgroundColor};
+      font-family: Arial, sans-serif;
+    }
+    #mermaid-diagram {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="mermaid-diagram">
+    <div class="mermaid">
+${mermaidCode}
+    </div>
+  </div>
+  
+  <script>
+${mermaidScript}
+  </script>
+  <script>
+    try {
+      mermaid.initialize({
+        theme: '${options.theme}',
+        startOnLoad: true,
+        securityLevel: 'loose',
+        fontFamily: 'Arial, sans-serif'
+      });
+      
+      mermaid.init();
+      console.log('Mermaid initialized successfully');
+    } catch (error) {
+      console.error('Mermaid initialization error:', error);
+    }
   </script>
 </body>
 </html>`;
