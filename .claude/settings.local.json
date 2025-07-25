@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(ls:*)",
+      "Bash(CHROME_PATH=\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" node test-api.js)",
+      "Bash(node:*)",
+      "Bash(make:*)",
+      "Bash(chmod:*)",
+      "Bash(git merge:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh run view:*)",
+      "Bash(true)",
+      "Bash(--output downloaded_image.png)",
+      "Bash(kill:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}

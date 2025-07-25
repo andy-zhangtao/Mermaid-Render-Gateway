@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { MermaidRenderer } from '../services/MermaidRenderer';
+import { MermaidRenderer, RenderResult } from '../services/MermaidRenderer';
 import { RenderRequest, RenderResponse, MermaidRenderOptions } from '../types';
 
 export class RenderController {
@@ -30,28 +30,64 @@ export class RenderController {
         backgroundColor: options.backgroundColor || '#ffffff'
       };
 
+      let result: RenderResult;
+
       switch (format) {
         case 'base64':
-          const result = await this.renderer.renderToBase64(mermaid, renderOptions);
-          
+          const base64Result = await this.renderer.renderToBase64(mermaid, renderOptions);
           return reply.send({
             success: true,
             format: 'base64',
-            data: result.base64,
+            data: base64Result.base64,
             metadata: {
-              width: result.width,
-              height: result.height,
-              renderTime: result.renderTime
+              width: base64Result.width,
+              height: base64Result.height,
+              renderTime: base64Result.renderTime
             }
           } as RenderResponse);
 
+        case 'png':
+          result = await this.renderer.renderToPNG(mermaid, renderOptions);
+          reply.header('Content-Type', 'image/png');
+          reply.header('Content-Disposition', 'inline; filename="mermaid.png"');
+          return reply.send(result.data);
+
+        case 'jpeg':
+          const quality = options.quality || 90;
+          result = await this.renderer.renderToJPEG(mermaid, renderOptions, quality);
+          reply.header('Content-Type', 'image/jpeg');
+          reply.header('Content-Disposition', 'inline; filename="mermaid.jpg"');
+          return reply.send(result.data);
+
+        case 'svg':
+          result = await this.renderer.renderToSVG(mermaid, renderOptions);
+          reply.header('Content-Type', 'image/svg+xml');
+          reply.header('Content-Disposition', 'inline; filename="mermaid.svg"');
+          return reply.send(result.data);
+
+        case 'pdf':
+          result = await this.renderer.renderToPDF(mermaid, renderOptions);
+          reply.header('Content-Type', 'application/pdf');
+          reply.header('Content-Disposition', 'inline; filename="mermaid.pdf"');
+          return reply.send(result.data);
+
+        case 'html':
+          result = await this.renderer.renderToHTML(mermaid, renderOptions);
+          reply.header('Content-Type', 'text/html');
+          return reply.send(result.data);
+
         case 'url':
-        case 'binary':
-          return reply.status(501).send({
-            success: false,
-            error: {
-              code: 'NOT_IMPLEMENTED',
-              message: `Format '${format}' is not yet implemented`
+          result = await this.renderer.renderToURL(mermaid, renderOptions);
+          return reply.send({
+            success: true,
+            format: 'url',
+            data: result.data,
+            metadata: {
+              width: result.width,
+              height: result.height,
+              renderTime: result.renderTime,
+              contentType: 'image/png',
+              fileSize: 'available via download'
             }
           } as RenderResponse);
 
@@ -60,7 +96,7 @@ export class RenderController {
             success: false,
             error: {
               code: 'INVALID_FORMAT',
-              message: 'Format must be one of: base64, url, binary'
+              message: 'Format must be one of: base64, png, jpeg, svg, pdf, html, url'
             }
           } as RenderResponse);
       }
